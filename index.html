@@ -1,65 +1,61 @@
 <head>
     <style> body { margin: 0; } </style>
-  
     <script src="//unpkg.com/three"></script>
-    <script src="//unpkg.com/three/examples/js/controls/TrackballControls.js"></script>
-    <script src="//unpkg.com/three-globe"></script>
-    <!--<script src="../../dist/three-globe.js"></script>-->
+    <script src="//unpkg.com/globe.gl"></script>
+    <!--<script src="../../dist/globe.gl.js"></script>-->
   </head>
   
   <body>
     <div id="globeViz"></div>
   
     <script>
-      // Gen random data
-      const N = 20;
+
+// import {Dataset} from 'data.js';
+// const path = 'https://datahub.io/core/geo-ne-admin1/datapackage.json'
+
+// ;(async () => {
+//   const dataset = await Dataset.load(path)
+//   // get list of all resources:
+//   for (const id in dataset.resources) {
+//     console.log(dataset.resources[id]._descriptor.name) }
+//   })()
+
+      const world = Globe()
+        (document.getElementById('globeViz'))
+        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+        .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+        .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+        .pointOfView({ altitude: 4 }, 5000)
+        .polygonCapColor(feat => 'rgba(200, 0, 0, 0.6)')
+        .polygonSideColor(() => 'rgba(0, 100, 0, 0.05)')
+        .polygonLabel(({ properties: d }) => `
+            <b>${d.admin} (${d.brk_a3})</b> <br />
+            Population: <i>${Math.round(+d.pop_est / 1e4) / 1e2}M</i>
+          `);
+
+             // custom globe material
+    const globeMaterial = world.globeMaterial();
+    globeMaterial.bumpScale = 10;
+    new THREE.TextureLoader().load('//unpkg.com/three-globe/example/img/earth-water.png', texture => {
+      globeMaterial.specularMap = texture;
+      globeMaterial.specular = new THREE.Color('grey');
+      globeMaterial.shininess = 15;
+    });
   
-      const arcsData = [...Array(N).keys()].map(() => ({
-        startLat: (Math.random() - 0.5) * 180,
-        startLng: (Math.random() - 0.5) * 360,
-        endLat: (Math.random() - 0.5) * 180,
-        endLng: (Math.random() - 0.5) * 360,
-        color: ['red', 'white', 'blue', 'green'][Math.round(Math.random() * 3)]
-      }));
+      // Auto-rotate
+      world.controls().autoRotate = true;
+      world.controls().autoRotateSpeed = 1.2;
   
-      const Globe = new ThreeGlobe()
-        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
-        .arcsData(arcsData)
-        .arcColor('color')
-        .arcDashLength(0.4)
-        .arcDashGap(4)
-        .arcDashInitialGap(() => Math.random() * 5)
-        .arcDashAnimateTime(1000);
+      fetch('../datasets/countries.geojson').then(res => res.json()).then(countries => {
+        world.hexPolygonsData(countries.features)
+        .hexPolygonResolution(3)
+        .hexPolygonMargin(0.3)
+        .hexPolygonColor(() => `#${Math.round(Math.random() * Math.pow(2, 24)).toString(16).padStart(6, '0')}`)
   
-      // Setup renderer
-      const renderer = new THREE.WebGLRenderer();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.getElementById('globeViz').appendChild(renderer.domElement);
-  
-      // Setup scene
-      const scene = new THREE.Scene();
-      scene.add(Globe);
-      scene.add(new THREE.AmbientLight(0xbbbbbb));
-      scene.add(new THREE.DirectionalLight(0xffffff, 0.6));
-  
-      // Setup camera
-      const camera = new THREE.PerspectiveCamera();
-      camera.aspect = window.innerWidth/window.innerHeight;
-      camera.updateProjectionMatrix();
-      camera.position.z = 500;
-  
-      // Add camera controls
-      const tbControls = new THREE.TrackballControls(camera, renderer.domElement);
-      tbControls.minDistance = 101;
-      tbControls.rotateSpeed = 5;
-      tbControls.zoomSpeed = 0.8;
-  
-      // Kick-off renderer
-      (function animate() { // IIFE
-        // Frame cycle
-        tbControls.update();
-        renderer.render(scene, camera);
-        requestAnimationFrame(animate);
-      })();
+        // setTimeout(() => world
+        //   .polygonsTransitionDuration(4000)
+        //   .polygonAltitude(feat => Math.max(0.1, Math.sqrt(+feat.properties.POP_EST) * 7e-5))
+        // , 3000);
+      });
     </script>
   </body>

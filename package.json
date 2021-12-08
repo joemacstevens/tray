@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/joemacstevens/tray#readme",
   "dependencies": {
+    "data.js": "^0.12.11",
+    "globe.gl": "^2.23.0",
     "three-globe": "^2.21.3"
   }
 }
