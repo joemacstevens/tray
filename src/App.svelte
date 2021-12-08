@@ -1,30 +1,75 @@
-<script>
-	export let name;
+<script lang="ts">
+	import {
+		Canvas,
+		Scene,
+		PerspectiveCamera,
+		DirectionalLight,
+		PCFSoftShadowMap,
+		PlaneBufferGeometry,
+		AmbientLight,
+		BoxBufferGeometry,
+		Mesh,
+		MeshStandardMaterial,
+		WebGLRenderer,
+		OrbitControls,
+		DoubleSide,
+		MathUtils,
+	} from "svelthree";
+	let cubeGeometry = new BoxBufferGeometry(1, 1, 1);
+	let cubeMaterial = new MeshStandardMaterial();
+
+	let floorGeometry = new PlaneBufferGeometry(4,4,1);
+	let floorMaterial = new MeshStandardMaterial();
+
 </script>
 
-<main>
-	<h1>Hello {name}!</h1>
+<Canvas let:sti w={500} h={500}>
+	<Scene {sti} let:scene id="scene1" props={{ background: 0xedf2f7 }}>
+		<PerspectiveCamera
+			{scene}
+			id="cam1"
+			pos={[0, 0, 6]}
+			lookAt={[0, 0, 0]}
+		/>
+		<AmbientLight {scene} intensity={1.25} />
+		<DirectionalLight 
+			{scene} 
+			pos={[1, 2, 1]} 
+			intensity={0.8}
+			shadowMapSize={512 * 8}
+			castShadow />
 
-</main>
+		<Mesh
+			{scene}
+			geometry={cubeGeometry}
+			material={cubeMaterial}
+			mat={{ roughness: 0.5, metalness: 0.5, color: 0xff3e00 }}
+			pos={[0, 0, 0]}
+			rot={[0, 0, 0]}
+			castShadow
+			receiveShadow
+		/>
 
-<style>
-	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
-	}
+		<Mesh
+		{scene}
+		geometry={floorGeometry}
+		material={floorMaterial}
+		mat={{ roughness: 0.5, metalness: 0.5, side: DoubleSide, color: 0xf7fafc }}
+		pos={[0, -0.501, 0]}
+		rot={[MathUtils.degToRad(-90), 0, 0]}
+		scale={[1, 1, 1]}
+		receiveShadow />
 
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
-	}
+		<OrbitControls {scene} autoRotate enableDamping />
 
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
-</style>
+	</Scene>
+
+	<WebGLRenderer
+		{sti}
+		sceneId="scene1"
+		camId="cam1"
+		config={{ antialias: true, alpha: true }}
+		enableShadowMap
+		shadowMapType={PCFSoftShadowMap} 
+	/>
+</Canvas>
